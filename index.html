@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,14 +24,521 @@
 {
   "imports": {
     "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/"
   }
 }
 </script>
 </head>
-<body class="bg-slate-900 text-white overflow-hidden">
+<body class="bg-slate-900 text-white overflow-hidden select-none">
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <script type="module">
+        import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+        import ReactDOM from 'react-dom/client';
+
+        // --- Icons (Previously constants.tsx) ---
+        const SwordIcon = () => React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-10 w-10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M14.5 17.5L3 6" }), React.createElement("path", { d: "M15 6l5 5" }), React.createElement("path", { d: "M5 21l-2-2 5-5" }), React.createElement("path", { d: "M19 11l-5-5" }), React.createElement("path", { d: "M21 3l-2 2" }));
+        const AxeIcon = () => React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-10 w-10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M14.5 17.5l7-7-3-3-7 7-5.5-5.5-3 3z" }), React.createElement("path", { d: "M12 12l6 6" }));
+        const BowIcon = () => React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-10 w-10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M21 21l-6-6" }), React.createElement("path", { d: "M3 21c3.12-3.12 8.88-3.12 12 0" }), React.createElement("path", { d: "M15 3c-3.12 3.12-3.12 8.88 0 12" }));
+        const DaggerIcon = () => React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-10 w-10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M14.5 17.5L5 8.5l-2 2 9.5 9.5z" }), React.createElement("path", { d: "M13 11l6-6" }));
+        const ShieldIcon = () => React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-10 w-10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" }));
+        const StaffIcon = () => React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-10 w-10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M3 21l18-18" }), React.createElement("path", { d: "M5 5a2 2 0 11-4 0 2 2 0 014 0z" }), React.createElement("path", { d: "M19 19a2 2 0 114 0 2 2 0 01-4 0z" }));
+        const HammerIcon = () => React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-10 w-10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M15 12l-7-7" }), React.createElement("path", { d: "M21 5l-8.5 8.5" }), React.createElement("path", { d: "M11 3L2 12v3a6 6 0 006 6h3" }));
+        const BootsIcon = () => React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-10 w-10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M7.5 14.5l-3-2.5 3-2.5" }), React.createElement("path", { d: "M16.5 14.5l3-2.5-3-2.5" }), React.createElement("path", { d: "M2 15.5a2 2 0 002 2h16a2 2 0 002-2v-1a2 2 0 00-2-2H4a2 2 0 00-2 2v1z" }));
+        const TomeIcon = () => React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-10 w-10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M4 19.5A2.5 2.5 0 016.5 17H20v2H6.5A2.5 2.5 0 014 19.5z" }), React.createElement("path", { d: "M4 5.5A2.5 2.5 0 016.5 3H20v2H6.5A2.5 2.5 0 014 5.5z" }), React.createElement("path", { d: "M20 3v16" }), React.createElement("path", { d: "M2 3h2" }), React.createElement("path", { d: "M2 7h2" }), React.createElement("path", { d: "M2 11h2" }), React.createElement("path", { d: "M2 15h2" }), React.createElement("path", { d: "M2 19h2" }));
+        const SunstoneIcon = () => React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-10 w-10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("circle", { cx: "12", cy: "12", r: "4" }), React.createElement("path", { d: "M12 2v2" }), React.createElement("path", { d: "M12 20v2" }), React.createElement("path", { d: "M4.93 4.93l1.41 1.41" }), React.createElement("path", { d: "M17.66 17.66l1.41 1.41" }), React.createElement("path", { d: "M2 12h2" }), React.createElement("path", { d: "M20 12h2" }), React.createElement("path", { d: "M4.93 19.07l1.41-1.41" }), React.createElement("path", { d: "M17.66 6.34l1.41-1.41" }));
+
+        const ALL_ITEMS = [
+            { id: 'sword', name: '룬 블레이드', icon: React.createElement(SwordIcon), description: '적을 쉽게 베는 날카로운 검입니다.', type: 'weapon' },
+            { id: 'axe', name: '버서커의 도끼', icon: React.createElement(AxeIcon), description: '치명적인 타격을 가하는 무거운 도끼입니다.', type: 'weapon' },
+            { id: 'bow', name: '매의 눈 활', icon: React.createElement(BowIcon), description: '먼 거리에서 신속한 화살을 발사합니다.', type: 'weapon' },
+            { id: 'dagger', name: '그림자 단검', icon: React.createElement(DaggerIcon), description: '치명타를 위한 신속하고 조용한 무기입니다.', type: 'weapon' },
+            { id: 'hammer', name: '타이탄 해머', icon: React.createElement(HammerIcon), description: '땅을 뒤흔드는 거대한 망치입니다.', type: 'weapon' },
+            { id: 'shield', name: '이지스 방패', icon: React.createElement(ShieldIcon), description: '받는 피해를 줄여주는 튼튼한 방패입니다.', type: 'ability' },
+            { id: 'staff', name: '비전 마법봉', icon: React.createElement(StaffIcon), description: '강력한 마법 투사체를 발사합니다.', type: 'ability' },
+            { id: 'boots', name: '신속의 장화', icon: React.createElement(BootsIcon), description: '플레이어의 이동 속도를 증가시킵니다.', type: 'ability' },
+            { id: 'tome', name: '지식의 고서', icon: React.createElement(TomeIcon), description: '경험치 획득량을 증가시킵니다.', type: 'ability' },
+            { id: 'sunstone', name: '태양석', icon: React.createElement(SunstoneIcon), description: '주변의 적들에게 지속적인 피해를 입힙니다.', type: 'ability' },
+        ];
+
+        // --- Components ---
+
+        const Player = ({ position, hp, maxHp, isTakingDamage }) => {
+            const hpPercentage = (hp / maxHp) * 100;
+            return React.createElement("div", {
+                className: "absolute",
+                style: {
+                    left: `${position.x}px`,
+                    top: `${position.y}px`,
+                    transform: 'translate(-50%, -50%)',
+                }
+            }, 
+            // Health Bar
+            React.createElement("div", { className: "absolute -top-4 left-1/2 -translate-x-1/2 w-10 h-1.5 bg-slate-700/50 rounded-full overflow-hidden border border-slate-900" },
+                React.createElement("div", { 
+                    className: "h-full bg-green-500 rounded-full transition-all duration-200 ease-out",
+                    style: { width: `${hpPercentage}%` }
+                })
+            ),
+            // Character
+            React.createElement("div", {
+                className: `w-8 h-8 rounded-full border-2 border-slate-900 transition-colors duration-100 ${isTakingDamage ? 'bg-red-500 shadow-lg shadow-red-500/50' : 'bg-cyan-400 shadow-lg shadow-cyan-400/50'}`
+            }));
+        };
+
+        const Enemy = ({ position }) => (
+            React.createElement("div", {
+                className: "absolute w-7 h-7 bg-red-500 rounded-full border-2 border-slate-900 shadow-md shadow-red-500/50",
+                style: {
+                    left: `${position.x}px`,
+                    top: `${position.y}px`,
+                    transform: 'translate(-50%, -50%)',
+                }
+            })
+        );
+
+        const Projectile = ({ position }) => (
+            React.createElement("div", {
+                className: "absolute w-4 h-4 bg-yellow-300 rounded-full border border-yellow-500 shadow-[0_0_10px_rgba(253,224,71,0.8)] z-10",
+                style: {
+                    left: `${position.x}px`,
+                    top: `${position.y}px`,
+                    transform: 'translate(-50%, -50%)',
+                }
+            })
+        );
+
+        const Gauge = ({ value, max }) => {
+            const percentage = (value / max) * 100;
+            return React.createElement("div", { className: "fixed bottom-5 left-1/2 -translate-x-1/2 w-4/5 max-w-2xl h-6 bg-slate-700/50 backdrop-blur-sm rounded-full overflow-hidden border-2 border-slate-500 shadow-lg z-30" },
+                React.createElement("div", {
+                    className: "h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full transition-all duration-200 ease-out",
+                    style: { width: `${percentage}%` }
+                }),
+                React.createElement("span", { className: "absolute inset-0 flex items-center justify-center text-sm font-bold text-white mix-blend-lighten tracking-wider" },
+                    `경험치: ${Math.floor(value)} / ${max}`
+                )
+            );
+        };
+
+        const WeaponSelectionCard = ({ weapon, onSelect }) => (
+            React.createElement("button", {
+                onClick: () => onSelect(weapon),
+                className: "bg-slate-800 border-2 border-slate-600 rounded-lg p-6 flex flex-col items-center gap-4 text-center transform hover:scale-105 hover:bg-slate-700 hover:border-cyan-400 transition-all duration-200 ease-in-out cursor-pointer shadow-lg w-full"
+            },
+                React.createElement("div", { className: "text-cyan-400 scale-125" }, weapon.icon),
+                React.createElement("h3", { className: "text-xl font-bold text-white mt-2" }, weapon.name),
+                React.createElement("p", { className: "text-slate-400 text-sm" }, weapon.description)
+            )
+        );
+
+        const WeaponSelectionModal = ({ weapons, onSelect }) => (
+            React.createElement("div", { className: "fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fade-in" },
+                React.createElement("div", { className: "bg-slate-900/80 backdrop-blur-sm p-8 rounded-xl border border-slate-700 shadow-2xl max-w-4xl w-full" },
+                    React.createElement("h2", { className: "text-3xl font-bold text-center mb-2 text-cyan-400" }, "레벨 업!"),
+                    React.createElement("p", { className: "text-center text-slate-300 mb-8" }, "새로운 능력을 선택하세요."),
+                    React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-3 gap-6" },
+                        weapons.map((weapon) => React.createElement(WeaponSelectionCard, { key: weapon.id, weapon, onSelect }))
+                    )
+                )
+            )
+        );
+
+        const GameOverModal = ({ onRestart, score }) => (
+            React.createElement("div", { className: "fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 animate-fade-in" },
+                React.createElement("div", { className: "bg-slate-900/80 backdrop-blur-sm p-8 rounded-xl border border-slate-700 shadow-2xl text-center" },
+                    React.createElement("h2", { className: "text-4xl font-bold mb-4 text-red-500" }, "게임 오버"),
+                    React.createElement("p", { className: "text-xl text-slate-300 mb-8" }, `생존 시간: ${score}초`),
+                    React.createElement("button", {
+                        onClick: onRestart,
+                        className: "bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold py-3 px-8 rounded-lg text-lg transition-colors duration-200"
+                    }, "다시 시작")
+                )
+            )
+        );
+
+        const Joystick = ({ onMove, onEnd }) => {
+            const baseRef = useRef(null);
+            const stickRef = useRef(null);
+            const isDragging = useRef(false);
+            const baseSize = 128;
+            const stickSize = 64;
+
+            const handleInteractionStart = (e) => {
+                isDragging.current = true;
+                if (stickRef.current) stickRef.current.style.transition = '0s';
+                updateStickPosition(e);
+            };
+
+            const handleInteractionEnd = useCallback(() => {
+                if (!isDragging.current) return;
+                isDragging.current = false;
+                if (stickRef.current) {
+                    stickRef.current.style.transition = '0.2s ease-out';
+                    stickRef.current.style.transform = `translate(0px, 0px)`;
+                }
+                onEnd();
+            }, [onEnd]);
+
+            const getEventCoordinates = (e) => {
+                if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                return { x: e.clientX, y: e.clientY };
+            }
+
+            const updateStickPosition = (e) => {
+                if (!baseRef.current || !stickRef.current) return;
+                const { x: eventX, y: eventY } = getEventCoordinates(e);
+                const { left, top, width } = baseRef.current.getBoundingClientRect();
+                const centerX = left + width / 2;
+                const centerY = top + width / 2;
+                let dx = eventX - centerX;
+                let dy = eventY - centerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const radius = width / 2;
+                if (distance > radius) {
+                    dx = (dx / distance) * radius;
+                    dy = (dy / distance) * radius;
+                }
+                stickRef.current.style.transform = `translate(${dx}px, ${dy}px)`;
+                onMove({ x: dx / radius, y: dy / radius });
+            };
+
+            const handleInteractionMove = useCallback((e) => {
+                if (!isDragging.current) return;
+                if(e.preventDefault) e.preventDefault();
+                updateStickPosition(e);
+            }, [onMove]);
+
+            useEffect(() => {
+                window.addEventListener('mousemove', handleInteractionMove, { passive: false });
+                window.addEventListener('touchmove', handleInteractionMove, { passive: false });
+                window.addEventListener('mouseup', handleInteractionEnd);
+                window.addEventListener('touchend', handleInteractionEnd);
+                return () => {
+                    window.removeEventListener('mousemove', handleInteractionMove);
+                    window.removeEventListener('touchmove', handleInteractionMove);
+                    window.removeEventListener('mouseup', handleInteractionEnd);
+                    window.removeEventListener('touchend', handleInteractionEnd);
+                };
+            }, [handleInteractionMove, handleInteractionEnd]);
+
+            return React.createElement("div", {
+                ref: baseRef,
+                className: "fixed bottom-10 left-10 bg-slate-700/30 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-slate-500/50 select-none z-40",
+                onMouseDown: handleInteractionStart,
+                onTouchStart: handleInteractionStart,
+                style: { width: `${baseSize}px`, height: `${baseSize}px` }
+            }, React.createElement("div", {
+                ref: stickRef,
+                className: "bg-cyan-400/50 rounded-full border-2 border-cyan-300/80 shadow-lg",
+                style: { width: `${stickSize}px`, height: `${stickSize}px` }
+            }));
+        };
+
+        // --- Main App Logic ---
+
+        const App = () => {
+            // Game Constants
+            const GAUGE_MAX = 100;
+            const PLAYER_SPEED = 5;
+            const ENEMY_SPEED = 1.5;
+            const GAUGE_FILL_RATE = 5;
+            const ENEMY_SPAWN_RATE = 1500;
+            const MAX_PLAYER_HP = 100;
+            const ENEMY_DAMAGE = 25;
+            const PROJECTILE_SPEED = 8;
+            const ATTACK_COOLDOWN = 500; // ms
+
+            // State
+            const [position, setPosition] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+            const [playerHp, setPlayerHp] = useState(MAX_PLAYER_HP);
+            const [isTakingDamage, setIsTakingDamage] = useState(false);
+            const [gaugeValue, setGaugeValue] = useState(0);
+            const [equippedItems, setEquippedItems] = useState([]);
+            const [itemChoices, setItemChoices] = useState([]);
+            const [showSelection, setShowSelection] = useState(false);
+            const [enemies, setEnemies] = useState([]);
+            const [projectiles, setProjectiles] = useState([]);
+            const [isGameOver, setIsGameOver] = useState(false);
+            const [gameTime, setGameTime] = useState(0);
+
+            // Refs for game loop to avoid stale closures
+            const keysPressed = useMemo(() => new Set(), []);
+            const joystickDirection = useRef({ x: 0, y: 0 });
+            const damageTimeoutRef = useRef(null);
+            const lastShotTime = useRef(0);
+            
+            const gamePaused = showSelection || isGameOver;
+
+            const getThreeRandomItems = useCallback(() => {
+                const shuffled = [...ALL_ITEMS].sort(() => 0.5 - Math.random());
+                return shuffled.slice(0, 3);
+            }, []);
+
+            const handleRestart = useCallback(() => {
+                setPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+                setGaugeValue(0);
+                setEquippedItems([]);
+                setEnemies([]);
+                setProjectiles([]);
+                setGameTime(0);
+                setShowSelection(false);
+                setIsGameOver(false);
+                setPlayerHp(MAX_PLAYER_HP);
+                lastShotTime.current = 0;
+            }, []);
+
+            // Game Loop
+            useEffect(() => {
+                let animationFrameId;
+
+                const gameLoop = (timestamp) => {
+                    if (gamePaused) {
+                        animationFrameId = requestAnimationFrame(gameLoop);
+                        return;
+                    }
+
+                    // 1. Move Player
+                    setPosition(prev => {
+                        let dx = joystickDirection.current.x;
+                        let dy = joystickDirection.current.y;
+                        if (keysPressed.has('arrowup') || keysPressed.has('w')) dy -= 1;
+                        if (keysPressed.has('arrowdown') || keysPressed.has('s')) dy += 1;
+                        if (keysPressed.has('arrowleft') || keysPressed.has('a')) dx -= 1;
+                        if (keysPressed.has('arrowright') || keysPressed.has('d')) dx += 1;
+
+                        // Normalize vector
+                        const magnitude = Math.sqrt(dx * dx + dy * dy);
+                        if (magnitude > 0) {
+                            let newX = prev.x + (dx / magnitude) * PLAYER_SPEED;
+                            let newY = prev.y + (dy / magnitude) * PLAYER_SPEED;
+                            const playerSize = 16;
+                            newX = Math.max(playerSize, Math.min(window.innerWidth - playerSize, newX));
+                            newY = Math.max(playerSize, Math.min(window.innerHeight - playerSize, newY));
+                            return { x: newX, y: newY };
+                        }
+                        return prev;
+                    });
+
+                    // 2. Enemies and Projectiles Logic
+                    setEnemies(currentEnemies => {
+                        let nextEnemies = [...currentEnemies];
+                        let totalDamage = 0;
+                        const enemiesToRemove = new Set();
+
+                        // 2a. Move Enemies
+                        nextEnemies = nextEnemies.map(enemy => {
+                            // Use current position ref or state? State inside setEnemies might be slightly stale for position, 
+                            // but standard React batching usually handles this okay for simple games.
+                            // To be perfectly accurate we should track player pos in a ref, but for this demo state is fine.
+                            // However, we need access to the *latest* player position calculated above. 
+                            // Since we can't access the state updated in the same tick easily without refs, 
+                            // we will use the state from the closure which is one frame behind - acceptable.
+                            const dx = position.x - enemy.x;
+                            const dy = position.y - enemy.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+
+                            // Collision with Player
+                            if (distance < 25) {
+                                totalDamage += ENEMY_DAMAGE;
+                                enemiesToRemove.add(enemy.id);
+                                return enemy; 
+                            }
+
+                            return {
+                                ...enemy,
+                                x: enemy.x + (dx / distance) * ENEMY_SPEED,
+                                y: enemy.y + (dy / distance) * ENEMY_SPEED
+                            };
+                        });
+
+                        // 2b. Handle Player Damage
+                        if (totalDamage > 0) {
+                            setPlayerHp(prevHp => {
+                                const newHp = prevHp - totalDamage;
+                                if (newHp <= 0) {
+                                    setIsGameOver(true);
+                                    return 0;
+                                }
+                                return newHp;
+                            });
+                            setIsTakingDamage(true);
+                            if (damageTimeoutRef.current) clearTimeout(damageTimeoutRef.current);
+                            damageTimeoutRef.current = setTimeout(() => setIsTakingDamage(false), 150);
+                        }
+
+                        // 3. Projectile Movement & Collision
+                        setProjectiles(currentProjectiles => {
+                            // Move projectiles
+                            const activeProjectiles = currentProjectiles.map(p => ({
+                                ...p,
+                                x: p.x + p.vx,
+                                y: p.y + p.vy
+                            })).filter(p => 
+                                p.x > 0 && p.x < window.innerWidth && 
+                                p.y > 0 && p.y < window.innerHeight
+                            );
+
+                            // Check Projectile <-> Enemy Collisions
+                            // Simple O(N*M) check
+                            const survivingProjectiles = [];
+                            
+                            for (const p of activeProjectiles) {
+                                let hit = false;
+                                for (const e of nextEnemies) {
+                                    if (enemiesToRemove.has(e.id)) continue; // Already dead
+                                    
+                                    const dist = Math.sqrt((p.x - e.x)**2 + (p.y - e.y)**2);
+                                    if (dist < 20) { // Hit radius
+                                        enemiesToRemove.add(e.id); // Kill enemy
+                                        hit = true;
+                                        break; // One projectile hits one enemy
+                                    }
+                                }
+                                if (!hit) survivingProjectiles.push(p);
+                            }
+
+                            return survivingProjectiles;
+                        });
+
+                        return nextEnemies.filter(e => !enemiesToRemove.has(e.id));
+                    });
+
+                    // 4. Auto-Attack Logic
+                    if (timestamp - lastShotTime.current > ATTACK_COOLDOWN) {
+                        // Find nearest enemy
+                        // We need access to the latest enemies. 'enemies' state is from render closure.
+                        // This means projectiles might target enemies that just died or moved, but acceptable.
+                        if (enemies.length > 0) {
+                            let nearest = null;
+                            let minDist = Infinity;
+                            
+                            for (const e of enemies) {
+                                const d = (e.x - position.x)**2 + (e.y - position.y)**2;
+                                if (d < minDist) {
+                                    minDist = d;
+                                    nearest = e;
+                                }
+                            }
+
+                            if (nearest) {
+                                const dx = nearest.x - position.x;
+                                const dy = nearest.y - position.y;
+                                const mag = Math.sqrt(dx*dx + dy*dy);
+                                
+                                if (mag > 0) {
+                                    setProjectiles(prev => [
+                                        ...prev,
+                                        {
+                                            id: Date.now() + Math.random(),
+                                            x: position.x,
+                                            y: position.y,
+                                            vx: (dx / mag) * PROJECTILE_SPEED,
+                                            vy: (dy / mag) * PROJECTILE_SPEED
+                                        }
+                                    ]);
+                                    lastShotTime.current = timestamp;
+                                }
+                            }
+                        }
+                    }
+
+                    animationFrameId = requestAnimationFrame(gameLoop);
+                };
+
+                animationFrameId = requestAnimationFrame(gameLoop);
+                return () => {
+                    cancelAnimationFrame(animationFrameId);
+                    if (damageTimeoutRef.current) clearTimeout(damageTimeoutRef.current);
+                };
+            }, [gamePaused, keysPressed, position, enemies]); // Dependencies dictate when loop recreates. 
+            // Note: Recreating loop on 'enemies' change effectively updates logic 60fps because enemies change constantly.
+
+            // Keyboard Listeners
+            useEffect(() => {
+                const handleKeyDown = (e) => keysPressed.add(e.key.toLowerCase());
+                const handleKeyUp = (e) => keysPressed.delete(e.key.toLowerCase());
+                window.addEventListener('keydown', handleKeyDown);
+                window.addEventListener('keyup', handleKeyUp);
+                return () => {
+                    window.removeEventListener('keydown', handleKeyDown);
+                    window.removeEventListener('keyup', handleKeyUp);
+                };
+            }, [keysPressed]);
+
+            // Enemy Spawner
+            useEffect(() => {
+                if (gamePaused) return;
+                const spawnInterval = setInterval(() => {
+                    const side = Math.floor(Math.random() * 4);
+                    let x, y;
+                    if (side === 0) { x = 0; y = Math.random() * window.innerHeight; } 
+                    else if (side === 1) { x = window.innerWidth; y = Math.random() * window.innerHeight; }
+                    else if (side === 2) { y = 0; x = Math.random() * window.innerWidth; }
+                    else { y = window.innerHeight; x = Math.random() * window.innerWidth; }
+                    setEnemies(prev => [...prev, { id: Date.now(), x, y }]);
+                }, ENEMY_SPAWN_RATE);
+                return () => clearInterval(spawnInterval);
+            }, [gamePaused]);
+
+            // Timer
+            useEffect(() => {
+                if (gamePaused) return;
+                const timer = setInterval(() => {
+                    setGameTime(prev => prev + 1);
+                    setGaugeValue(prev => Math.min(prev + (GAUGE_FILL_RATE / 10), GAUGE_MAX));
+                }, 100);
+                return () => clearInterval(timer);
+            }, [gamePaused]);
+
+            // Level Up
+            useEffect(() => {
+                if (gaugeValue >= GAUGE_MAX && !showSelection) {
+                    setItemChoices(getThreeRandomItems());
+                    setShowSelection(true);
+                }
+            }, [gaugeValue, showSelection, getThreeRandomItems]);
+
+            const handleItemSelect = useCallback((item) => {
+                setEquippedItems(prev => [...prev, item]);
+                setGaugeValue(0);
+                setShowSelection(false);
+            }, []);
+
+            const handleJoystickMove = useCallback((direction) => { joystickDirection.current = direction; }, []);
+            const handleJoystickEnd = useCallback(() => { joystickDirection.current = { x: 0, y: 0 }; }, []);
+
+            return React.createElement("main", { className: "relative w-screen h-screen bg-grid cursor-none overflow-hidden" },
+                React.createElement("div", { className: "absolute inset-0 bg-slate-900 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" }),
+                // HUD
+                React.createElement("div", { className: "absolute top-5 left-5 p-4 bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-700 shadow-lg z-20 max-w-sm" },
+                    React.createElement("h1", { className: "text-xl font-bold text-cyan-400" }, `생존 시간: ${gameTime}초`),
+                    equippedItems.length > 0 ? (
+                        React.createElement("div", { className: "mt-2" },
+                            React.createElement("p", { className: "text-slate-400 text-sm" }, "보유 능력:"),
+                            React.createElement("div", { className: "flex flex-wrap items-center gap-2 mt-1" },
+                                equippedItems.map(item => React.createElement("div", { key: item.id, className: "text-cyan-400 bg-slate-800 p-1 rounded-md" }, item.icon))
+                            )
+                        )
+                    ) : React.createElement("p", { className: "mt-2 text-slate-400 text-sm" }, "캐릭터가 자동으로 가장 가까운 적을 공격합니다. 이동하여 생존하세요!")
+                ),
+
+                // Game Objects
+                React.createElement(Player, { position, hp: playerHp, maxHp: MAX_PLAYER_HP, isTakingDamage }),
+                enemies.map(enemy => React.createElement(Enemy, { key: enemy.id, position: enemy })),
+                projectiles.map(proj => React.createElement(Projectile, { key: proj.id, position: proj })),
+                
+                !isGameOver && React.createElement(Gauge, { value: gaugeValue, max: GAUGE_MAX }),
+                !isGameOver && React.createElement(Joystick, { onMove: handleJoystickMove, onEnd: handleJoystickEnd }),
+
+                showSelection && React.createElement(WeaponSelectionModal, { weapons: itemChoices, onSelect: handleItemSelect }),
+                isGameOver && React.createElement(GameOverModal, { onRestart: handleRestart, score: gameTime })
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(App));
+    </script>
 </body>
 </html>
